@@ -1,0 +1,5 @@
+docs/
+.DS_Store
+__pycache__
+chrome-app/assets/
+chrome-app/samples/

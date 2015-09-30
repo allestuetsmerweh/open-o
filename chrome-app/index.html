@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" href="styles.css" />
+<script type="text/javascript" src="angular.js"></script>
+<script type="text/javascript" src="openo.js"></script>
+<script type="text/javascript" src="si.js"></script>
+<script type="text/javascript" src="app.js"></script>
+</head>
+<body id="body" ng-app="openo" ng-controller="openoCtrl">
+    <div class="win" ng-show="selectedEvent==null">
+        <div style="margin:auto; padding:10px; max-width:420px;">
+            <div class="swag_button" ng-click="newEvent()"><img class="swag_icon" /><div class="swag_title">Neuen Event erstellen</div></div>
+            <div style="overflow-x:hidden; overflow-y:auto;">
+                <div class="swag_button" ng-repeat="event in events"><img class="swag_icon" /><div class="swag_title">{{event.name}}</div></div>
+            </div>
+            <div class="swag_button" id="but_import_event"><img class="swag_icon" /><div class="swag_title">Event importieren...</div><div class="swag_subtitle">XML Datei auswählen</div></div>
+        </div>
+    </div>
+    <div class="win" ng-show="selectedEvent!=null">
+        <div ng-show="currentEvent().participants!=null && 0<currentEvent().participants.length">
+            <table>
+                <tr><td>Vorname</td><td>Name</td><td>Jahrgang</td><td>Wohnort</td><td>Verein</td><td>Kategorie</td><td>Startzeit</td><td>Zielzeit</td><td>Resultat</td></tr>
+                <tr ng-repeat="p in currentEvent().participants"><td>{{p.firstName}}</td><td>{{p.lastName}}</td><td>{{p.birthYear}}</td><td>{{p.addressCity}}</td><td>{{p.organisation}}</td><td>{{p.class}}</td><td>Startzeit</td><td>Zielzeit</td><td>Resultat</td></tr>
+            </table>
+        </div>
+        <div ng-show="currentEvent().participants.length==0">Noch keine Teilnehmer</div>
+        <div ng-show="currentEvent().participants==null">Noch keine Teilnehmer</div>
+        <!--
+        <div class="tabcontainer">
+            <span class="tab{{currentEvent().selectedTab==tab?' sel':''}}" ng-repeat="tab in currentEventTabs()" ng-click="selectTab(tab)" title="{{tabs[tab].description}}">{{tabs[tab].name}}</span>
+        </div>
+        <div class="tabcontent">
+            <div>Event Name: <input type="text" ng-model="currentEvent().name" /></div>
+            <h2>Tools</h2>
+            <div>Läufer-Datenbank / Verein-Datenbank</div>
+            <div>Kategorien</div>
+            <div>Ersatzposten</div>
+        </div>
+        -->
+    </div>
+    <div id="si_elem" style="position:fixed; top:0px; left:0px; width:100%;">
+        <div style="margin:10px;" ng-repeat="(device, ms) in currentSIMainStations">
+            <div ng-show="ms.card">
+                <div>SICard Number: {{ms.card.cardNumber}}</div>
+                <div>Start: {{ms.card.startTime}}</div>
+                <div>Finish: {{ms.card.finishTime}}</div>
+                <div ng-repeat="p in ms.card.punches">{{p.code}}: {{p.time}}</div>
+        </div>
+    </div>
+</body>
+</html>

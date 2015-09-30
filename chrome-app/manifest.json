@@ -1,0 +1,17 @@
+{
+    "manifest_version": 2,
+    "name": "Open-O",
+    "version": "1.0",
+    "permissions": ["storage", "serial"],
+    "optional_permissions": [{"usbDevices": [{"vendorId": 4292, "productId": 32778}]}],
+    "minimum_chrome_version": "23",
+    "icons": {
+        "16": "icon_16.png",
+        "128": "icon_128.png"
+    },
+    "app": {
+        "background": {
+            "scripts": ["background.js"]
+        }
+    }
+}
