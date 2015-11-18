@@ -506,61 +506,14 @@ si.MainStation = function (device) {
     this.onCardRemoved = false;
     this._resetSendCommandResp();
     this._respBuffer = [];
-    try {
-        chrome.serial.connect(device, {bitrate:38400}, (function (ms) {return function (info) {
-            ms._chromeAppConnID = info.connectionId;
-            chrome.serial.onReceive.addListener(function (e) {
-                if (e.connectionId!=ms._chromeAppConnID) return;
-                var bufView = new Uint8Array(e.data);
-                console.debug("<=", si.tools.prettyHex(bufView));
-                for (var i=0; i<bufView.length; i++) ms._respBuffer.push(bufView[i]);
-                ms._processRespBuffer();
-            });
-            chrome.serial.onReceiveError.addListener(function (e) {
-                if (e.connectionId!=ms._chromeAppConnID) return;
-                chrome.serial.disconnect(ms._chromeAppConnID, function (info) {
-                    delete si.MainStation.allByDevice[ms.device];
-                    try {
-                        si.MainStation.onRemoved(ms);
-                    } catch (err) {}
-                    try {
-                        ms.onRemoved()
-                    } catch (err) {}
-                });
-            });
-            ms._sendCommand(si.proto.cmd.GET_MS, [0x00], 1, function () {
-                if (!si.MainStation.allByDevice[ms.device]) si.MainStation.allByDevice[ms.device] = ms;
-                try {
-                    si.MainStation.onAdded(ms);
-                } catch (err) {}
-            });
-        };})(this));
-    } catch (err) {
-        this._localhostSock = new WebSocket("ws://localhost:1366/devices/"+device, "OpenOSportIdent");
-        this._localhostSock.onmessage = (function (ms) {return function (e) {
-            var resp_str = window.atob(e.data);
-            console.debug("<=", si.tools.prettyHex(resp_str));
-            for (var i=0; i<resp_str.length; i++) ms._respBuffer.push(resp_str.charCodeAt(i));
-            ms._processRespBuffer();
-        };})(this);
-        this._localhostSock.onopen = (function (ms) {return function (e) {
-            ms._sendCommand(si.proto.cmd.GET_MS, [0x00], 1, function () {
-                if (!si.MainStation.allByDevice[ms.device]) si.MainStation.allByDevice[ms.device] = ms;
-                try {
-                    si.MainStation.onAdded(ms);
-                } catch (err) {}
-            });
-        };})(this);
-        this._localhostSock.onclose = (function (ms) {return function (e) {
-            delete si.MainStation.allByDevice[ms.device];
-            try {
-                si.MainStation.onRemoved(ms);
-            } catch (err) {}
-            try {
-                ms.onRemoved()
-            } catch (err) {}
-        };})(this);
-    }
+    this._status = si.MainStation.Status.Uninitialized;
+    if (!si.MainStation.allByDevice[device]) si.MainStation.allByDevice[device] = this;
+    this._setup();
+};
+
+si.MainStation.Status = { // TODO: maybe include instructions in description?
+    Uninitialized: {val:0, description:"This si.MainStation is not yet initialized. Commands can neither be received nor sent yet."},
+    Ready: {val:1, description:"This si.MainStation is initialized and ready. Commands can be received and sent."},
 };
 
 si.MainStation.allByDevice = {};
@@ -575,10 +528,12 @@ si.MainStation._detectDevicesUsingChromeApp = function () {
     chrome.serial.getDevices(function(ports) {
         ports.forEach(function (port) {
             var is_si = (port.path.substr(0, 23)=="/dev/tty.SLAB_USBtoUART");
+            is_si = is_si || (port.path.substr(0, 11)=="/dev/ttyUSB");
             if (is_si && !si.MainStation.allByDevice[port.path]) new si.MainStation(port.path);
         });
     });
 };
+/*
 si.MainStation._detectDevicesUsingLocalhost = function () {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "http://localhost:1366/devices", true);
@@ -595,7 +550,6 @@ si.MainStation._detectDevicesUsingLocalhost = function () {
     };})(si, xhr);
     xhr.send();
 };
-/*
 chrome.usb.getDevices({"vendorId":4292, "productId":32778}, function(devices) {
     console.log("USB", devices);
     if (chrome.runtime.lastError != undefined) {
@@ -615,6 +569,7 @@ si.MainStation._startDeviceDetectionUsingChromeApp = function () {
     };
     fn();
 };
+/*
 si.MainStation._startDeviceDetectionUsingLocalhost = function () {
     if (!si.MainStation._detectionSock || 1<si.MainStation._detectionSock.readyState) {
         si.MainStation._detectionSock = new WebSocket("ws://localhost:1366/devices", "OpenOSportIdent");
@@ -648,11 +603,12 @@ si.MainStation._keepDeviceDetectionUsingLocalhost = function () {
         si.MainStation.detectionTimeout = window.setTimeout(si.MainStation._keepDeviceDetectionUsingLocalhost, 1000);
     }
 };
+*/
 si.MainStation.startDeviceDetection = function () {
     try {
         si.MainStation._startDeviceDetectionUsingChromeApp();
     } catch (err) {
-        si.MainStation._startDeviceDetectionUsingLocalhost();
+        console.error("Could not start device detection", err);
     }
 };
 si.MainStation.onAdded = function (ms) {};
@@ -660,6 +616,72 @@ si.MainStation.onRemoved = function (ms) {};
 
 si.MainStation.prototype = si.Station.prototype;
 si.MainStation.prototype.onRemoved = function () {};
+si.MainStation.prototype._setup = function () {
+    try {
+        chrome.serial.connect(this.device, {name:"OpenO"/* TODO: make variable */, bitrate:38400}, (function (ms) {return function (info) {
+            if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError.message);
+                window.setTimeout(ms._setup.bind(ms), 1000);
+                return;
+            }
+            ms._chromeAppConnID = info.connectionId;
+            chrome.serial.onReceive.addListener(function (e) {
+                if (e.connectionId!=ms._chromeAppConnID) return;
+                var bufView = new Uint8Array(e.data);
+                console.debug("<=", si.tools.prettyHex(bufView));
+                for (var i=0; i<bufView.length; i++) ms._respBuffer.push(bufView[i]);
+                ms._processRespBuffer();
+            });
+            chrome.serial.onReceiveError.addListener(function (e) {
+                if (e.connectionId!=ms._chromeAppConnID) return;
+                chrome.serial.disconnect(ms._chromeAppConnID, function (info) {
+                    delete si.MainStation.allByDevice[ms.device];
+                    try {
+                        si.MainStation.onRemoved(ms);
+                    } catch (err) {}
+                    try {
+                        ms.onRemoved()
+                    } catch (err) {}
+                });
+            });
+            ms._sendCommand(si.proto.cmd.GET_MS, [0x00], 1, function () {
+                ms._status = si.MainStation.Status.Ready;
+                try {
+                    si.MainStation.onAdded(ms);
+                } catch (err) {}
+            });
+        };})(this));
+    } catch (err) {
+        console.error("Could not connect to serial port \""+this.device+"\"");
+        window.setTimeout(this._setup.bind(this), 1000);
+    }
+    /*
+    this._localhostSock = new WebSocket("ws://localhost:1366/devices/"+device, "OpenOSportIdent");
+    this._localhostSock.onmessage = (function (ms) {return function (e) {
+        var resp_str = window.atob(e.data);
+        console.debug("<=", si.tools.prettyHex(resp_str));
+        for (var i=0; i<resp_str.length; i++) ms._respBuffer.push(resp_str.charCodeAt(i));
+        ms._processRespBuffer();
+    };})(this);
+    this._localhostSock.onopen = (function (ms) {return function (e) {
+        ms._sendCommand(si.proto.cmd.GET_MS, [0x00], 1, function () {
+            if (!si.MainStation.allByDevice[ms.device]) si.MainStation.allByDevice[ms.device] = ms;
+            try {
+                si.MainStation.onAdded(ms);
+            } catch (err) {}
+        });
+    };})(this);
+    this._localhostSock.onclose = (function (ms) {return function (e) {
+        delete si.MainStation.allByDevice[ms.device];
+        try {
+            si.MainStation.onRemoved(ms);
+        } catch (err) {}
+        try {
+            ms.onRemoved()
+        } catch (err) {}
+    };})(this);
+    */
+};
 si.MainStation.prototype._processRespBuffer = function () {
     while (0<this._respBuffer.length) {
         if (this._respBuffer[0]==si.proto.ACK) {
@@ -808,6 +830,7 @@ si.MainStation.prototype._sendCommand = function (command, parameters, num_resp,
             console.log("Sent with Chrome App", info);
         });
     } catch (err) {
+        /*
         if (this._localhostSock.readyState==1) {
             try {
                 this._localhostSock.send(window.btoa(bstr));
@@ -819,6 +842,7 @@ si.MainStation.prototype._sendCommand = function (command, parameters, num_resp,
             onError("WS_SEND_ERR");
             return;
         }
+        */
     }
 
     // Response handling setup
