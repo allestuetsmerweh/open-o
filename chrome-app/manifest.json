@@ -2,7 +2,17 @@
     "manifest_version": 2,
     "name": "Open-O",
     "version": "1.0",
-    "permissions": ["storage", "serial"],
+    "permissions": ["cookies", "serial", "storage", "system.network", "system.storage"],
+    "sockets": {
+        "tcpServer": {
+            "listen": ""
+        },
+        "udp": {
+            "bind": "*",
+            "send": "*",
+            "multicastMembership": ""
+        }
+    },
     "optional_permissions": [{"usbDevices": [{"vendorId": 4292, "productId": 32778}]}],
     "minimum_chrome_version": "23",
     "icons": {

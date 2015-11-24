@@ -49,6 +49,13 @@ app.controller('openoCtrl', ['$scope', function($scope) {
 var oo = {};
 
 
+// Backup
+chrome.system.storage.getInfo(function (info) {
+    //console.log(info);
+});
+
+
+
 // ###### Ajax ######
 /*
 var ajaxWithHost = function (host) {return function (method, request, data, on_success, on_error) {

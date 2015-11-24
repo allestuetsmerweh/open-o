@@ -506,12 +506,12 @@ si.MainStation = function (device) {
     this.onCardRemoved = false;
     this._resetSendCommandResp();
     this._respBuffer = [];
-    this._status = si.MainStation.Status.Uninitialized;
+    this.state = si.MainStation.State.Uninitialized;
     if (!si.MainStation.allByDevice[device]) si.MainStation.allByDevice[device] = this;
     this._setup();
 };
 
-si.MainStation.Status = { // TODO: maybe include instructions in description?
+si.MainStation.State = { // TODO: maybe include instructions in description?
     Uninitialized: {val:0, description:"This si.MainStation is not yet initialized. Commands can neither be received nor sent yet."},
     Ready: {val:1, description:"This si.MainStation is initialized and ready. Commands can be received and sent."},
 };
@@ -645,7 +645,7 @@ si.MainStation.prototype._setup = function () {
                 });
             });
             ms._sendCommand(si.proto.cmd.GET_MS, [0x00], 1, function () {
-                ms._status = si.MainStation.Status.Ready;
+                ms.state = si.MainStation.State.Ready;
                 try {
                     si.MainStation.onAdded(ms);
                 } catch (err) {}

@@ -151,3 +151,20 @@ si.onLoad = function (e) {
         console.log("MainStation removed", ms);
     };
 };
+
+chrome.runtime.getPlatformInfo(function (platformInfo) {
+    console.log(platformInfo);
+});
+var openOP2P = new net.Peer2Peer("openo", "224.0.1.24"); // ffx8::0024
+openOP2P.onAdd = function (peer) {
+    console.log(peer);
+};
+window.setTimeout(function () {
+    openOP2P.discoveryIntervalFactor = 5;
+    openOP2P.sendAll("Hallo");
+}, 5000);
+/*
+window.setTimeout(function () {
+    openOP2P.close();
+}, 15000);
+*/
