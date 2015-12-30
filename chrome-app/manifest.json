@@ -2,10 +2,13 @@
     "manifest_version": 2,
     "name": "Open-O",
     "version": "1.0",
-    "permissions": ["cookies", "serial", "storage", "system.network", "system.storage"],
+    "permissions": ["serial", "storage", "system.network", "system.storage"],
     "sockets": {
         "tcpServer": {
             "listen": ""
+        },
+        "tcp": {
+            "connect": "*"
         },
         "udp": {
             "bind": "*",

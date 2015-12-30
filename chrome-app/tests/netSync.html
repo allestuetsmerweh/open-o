@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>netSync.js tests</title>
+<script type="text/javascript">
+var sysAPI = {};
+</script>
+<script type="text/javascript" src="../net.js"></script>
+<script type="text/javascript" src="../netSync.js"></script>
+<script type="text/javascript">
+
+function isDeeplyEqual(val1, val2) {
+    if (typeof(val1)!=typeof(val2)) return false;
+    if (val1 instanceof Object && val2 instanceof Object) {
+        for (var k in val1) {
+            if (val2[k]==undefined) return false;
+        }
+        for (var k in val2) {
+            if (val1[k]==undefined) return false;
+            if (!isDeeplyEqual(val1[k], val2[k])) return false;
+        }
+        return true;
+    } else {
+        return (val1==val2);
+    }
+}
+function deepCopy(val) {
+    if (val instanceof Object) {
+        var result = {};
+        for (var k in val) {
+            result[k] = deepCopy(val[k]);
+        }
+        return result;
+    } else {
+        return val;
+    }
+}
+
+var testSync = new net.sync.Root(false);
+
+var all_ok = true;
+
+testSync.myData = {0:"Null", 1:"Eins"};
+var res = testSync.diff([], testSync._myIndex, testSync.myData);
+var ok = isDeeplyEqual(res, {'[]':[{0:"Null", 1:"Eins"}]});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+var res = testSync.diff([], testSync._myIndex, testSync.myData);
+var ok = isDeeplyEqual(res, {});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+testSync.myData["wtf"] = "ASDF";
+var res = testSync.diff([], testSync._myIndex, testSync.myData);
+var ok = isDeeplyEqual(res, {'["wtf"]':["ASDF"]});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+testSync.myData = {0:"Null", 1:"Eins", 2:"Zwei"};
+var res = testSync.diff([], testSync._myIndex, testSync.myData);
+var ok = isDeeplyEqual(res, {'["wtf"]':[], '["2"]':["Zwei"]});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+testSync.myData = {1:"Eins", 2:"Zwei"};
+var res = testSync.diff([], testSync._myIndex, testSync.myData);
+var ok = isDeeplyEqual(res, {'["0"]':[]});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+if (all_ok) console.log("No Errors in diff tests");
+else console.error("Errors occurred in diff tests");
+console.log("\n");
+
+
+var all_ok = true;
+
+var res = testSync.patch([], {}, {'["num"]':[1], '[2]':["Zwei"]});
+var ok = isDeeplyEqual(res, {2:"Zwei", 'num':1});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+var res = testSync.patch([], {1:"Eins", 'num':1, 'wtf':1}, {'["num"]':[2], '["wtf"]':[], '[2]':["Zwei"]});
+var ok = isDeeplyEqual(res, {1:"Eins", 2:"Zwei", 'num':2});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+var res = testSync.patch([], {1:"Eins", 'num':1, 'wtf':1, 'dict':{'1':"Eins"}}, {'["num"]':[2], '["wtf"]':[], '[2]':["Zwei"], '["dict", "2"]':["Zwei"]});
+var ok = isDeeplyEqual(res, {1:"Eins", 2:"Zwei", 'num':2, 'dict':{'1':"Eins", '2':"Zwei"}});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+if (all_ok) console.log("No Errors in patch tests");
+else console.error("Errors occurred in patch tests");
+console.log("\n");
+
+
+var all_ok = true;
+
+var res = testSync.merge([{2:"Zwei", 'num':1}, {2:"Zwei", 'num':1}]);
+var ok = isDeeplyEqual(res, {2:"Zwei", 'num':1});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+var res = testSync.merge([{1:"Eins", 'num':1}, {2:"Zwei", 'num':1}, {3:"Drei", 'num':1}]);
+var ok = isDeeplyEqual(res, {1:"Eins", 2:"Zwei", 3:"Drei", 'num':1});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+var res = testSync.merge([{1:"Eins", 'num':1}, {2:"Zwei", 3:"Drei", 'num':2}]);
+var ok = isDeeplyEqual(res, {1:"Eins", 2:"Zwei", 3:"Drei", 'num':1});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+var res = testSync.merge([{2:"Zwei", 3:"Drei", 'num':2}, {1:"Eins", 'num':1}]);
+var ok = isDeeplyEqual(res, {1:"Eins", 2:"Zwei", 3:"Drei", 'num':2});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+var res = testSync.merge([{2:"Zwei", 3:"Drei", 'num':2}, {1:"Eins", 'num':1, 'dict':{'1':"Eins"}}]);
+var ok = isDeeplyEqual(res, {1:"Eins", 2:"Zwei", 3:"Drei", 'num':2, 'dict':{'1':"Eins"}});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+var res = testSync.merge([{2:"Zwei", 3:"Drei", 'num':2, 'dict':{'2':"Zwei"}}, {1:"Eins", 'num':1, 'dict':{'1':"Eins"}}]);
+var ok = isDeeplyEqual(res, {1:"Eins", 2:"Zwei", 3:"Drei", 'num':2, 'dict':{'1':"Eins", '2':"Zwei"}});
+all_ok = (all_ok && ok);
+console.log(res, ok);
+
+if (all_ok) console.log("No Errors in merge tests");
+else console.error("Errors occurred in merge tests");
+console.log("\n");
+
+
+var all_ok = true;
+
+testSync._myIndex = {};
+testSync.myData = {};
+var myDatas = [
+    {},
+    {1:"Eins", 'str':{'2':"Zwei"}},
+    {1:"Eins", 3:"Drei", 'str':{'2s':"Zwei", 'num':1}, 'num':2},
+    {1:"Eins", 3:"Drei", 'str':{'2s':"Zwei"}, 'num':{0:2, 1:1}},
+    {1:"Eins", 3:"Drei", 'str':{'2s':"Zwei", 'dict':{}}, 'num':{0:2, 1:1}},
+    {1:"Eins", 3:"Drei", 'str':{'2s':"Zwei", 'dict':{'wtf':0}}, 'num':{0:2, 1:1}},
+    {1:"Eins", 3:"Drei", 'str':{'2s':"Zwei", 'dict':{}}, 'num':{0:2, 1:1}},
+    {1:"Eins", 2:"Zwei", 'str':{'1s':"Eins", '2s':"Zwei"}, 'num':{0:2, 1:2}},
+    {1:"Eins", 2:"Zwei", 'num':{0:2}},
+    {},
+];
+for (var i=1; i<myDatas.length; i++) {
+    testSync.myData = deepCopy(myDatas[i]);
+    var diff = testSync.diff([], testSync._myIndex, testSync.myData);
+    console.log("DIFF", JSON.stringify(diff));
+
+    var dataTmp = deepCopy(myDatas[i-1]);
+    var res = testSync.patch([], dataTmp, diff);
+    var ok = isDeeplyEqual(res, myDatas[i]);
+    all_ok = (all_ok && ok);
+    console.log("COMP", JSON.stringify(res), JSON.stringify(myDatas[i]), ok);
+}
+
+if (all_ok) console.log("No Errors in overall tests");
+else console.error("Errors occurred in overall tests");
+console.log("\n");
+
+</script>
+</head>
+<body id="body">
+</body>
+</html>

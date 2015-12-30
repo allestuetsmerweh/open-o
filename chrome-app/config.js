@@ -1,0 +1,2 @@
+
+var sysAPI = chrome;

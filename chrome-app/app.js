@@ -156,13 +156,42 @@ chrome.runtime.getPlatformInfo(function (platformInfo) {
     console.log(platformInfo);
 });
 var openOP2P = new net.Peer2Peer("openo", "224.0.1.24"); // ffx8::0024
+/*
 openOP2P.onAdd = function (peer) {
     console.log(peer);
 };
+*/
+openOP2P.onIsDuplicateInstance = function (p2p) {
+    console.warn("There is already one instance running on this machine", p2p);
+};
+
+var openOSync = new net.sync.Root('openOSync', openOP2P);
+console.log("SYNC", openOSync);
+openOP2P.onPeerID(function (p2p, peerID) {
+    window.setTimeout(function () {
+        var colors = ['red', 'green', 'blue', 'yellow', 'violet', 'cyan', 'orange', 'brown', 'grey'];
+        var tmp = {};
+        tmp[peerID] = colors[Math.floor(Math.random()*colors.length)];
+        openOSync.myData = tmp;
+        openOSync.update();
+        openOSync.update();
+        openOSync.myData["wtf"] = "ASDF";
+        openOSync.update();
+    }, 5000);
+});
+
+/*
+openOP2P.onTCPReceive["test"] = function (p2p, resp) {
+    console.warn(resp);
+}
 window.setTimeout(function () {
-    openOP2P.discoveryIntervalFactor = 5;
-    openOP2P.sendAll("Hallo");
+    openOP2P.sendAll("test", "Hallo");
 }, 5000);
+*/
+
+window.setInterval(function () {
+    console.log(openOP2P.peers);
+}, 1000);
 /*
 window.setTimeout(function () {
     openOP2P.close();
