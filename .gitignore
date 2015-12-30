@@ -3,3 +3,4 @@ docs/
 __pycache__
 chrome-app/assets/
 chrome-app/samples/
+deprecated/

@@ -234,7 +234,7 @@ net.Peer2Peer.prototype._discoveryInterval = function (num) {
     if (1<changeRate) changeRate = 1;
     this._lastDiscoveryInterval = this._lastDiscoveryInterval*(1-changeRate) + Math.sqrt(num)*this.discoveryIntervalFactor*1000*changeRate;
     this._lastDiscoveryIntervalUpdateTime = now;
-    console.debug("Discovery Interval:", this._lastDiscoveryInterval, Math.floor(changeRate*100)+":"+Math.floor(100-changeRate*100), interval);
+    //console.debug("Discovery Interval:", this._lastDiscoveryInterval, Math.floor(changeRate*100)+":"+Math.floor(100-changeRate*100), interval);
     return this._lastDiscoveryInterval;
 }
 net.Peer2Peer.prototype._managePeers = function (localAddress) {
@@ -270,21 +270,21 @@ net.Peer2Peer.prototype._discovery = function (localAddress) {
             this._retryUDPSetup(localAddress);
             return;
         }
-        console.debug("Sent UDP Discovery from "+localAddress+":"+this.UDPPort);
+        //console.debug("Sent UDP Discovery from "+localAddress+":"+this.UDPPort);
         sysAPI.sockets.udp.send(this._UDPSocketIDs[localAddress], net.tools.str2buf(bstr), this.multicastAddress, this.UDPPort+1, function (sendInfo) {
             if (sysAPI.runtime.lastError) {
                 console.error("Error on UDP Socket ("+localAddress+") send(): ", sysAPI.runtime.lastError);
                 this._retryUDPSetup(localAddress);
                 return;
             }
-            console.debug("Sent UDP Discovery from "+localAddress+":"+this.UDPPort);
-            console.log("A UDP Discovery Message has been sent on "+localAddress);
+            //console.debug("Sent UDP Discovery from "+localAddress+":"+(this.UDPPort+1));
+            //console.log("A UDP Discovery Message has been sent on "+localAddress);
         }.bind(this));
     }.bind(this));
 }
 
 net.Peer2Peer.prototype._onUDPReceive = function (localAddress, info) {
-    console.warn("UDP RECV "+info.remoteAddress+" - "+net.tools.buf2str(info.data));
+    //console.warn("UDP RECV "+info.remoteAddress+" - "+net.tools.buf2str(info.data));
     var bufView = new Uint8Array(info.data);
     var ids_same = true;
     var localRuntimeID = this.serviceID;
@@ -310,7 +310,7 @@ net.Peer2Peer.prototype._onUDPReceive = function (localAddress, info) {
             p.lastExecId = remoteExecID;
             p.state = net.Peer.State.Active;
             this.peers[remotePeerID] = p;
-            console.log("A UDP Discovery Message has been received on "+localAddress);
+            //console.log("A UDP Discovery Message has been received on "+localAddress);
         }
         //console.log(this.peers);
     } else {

@@ -1,36 +1,5 @@
 si.onLoad = function (e) {
     var scope = angular.element(document.getElementById("body")).scope();
-    /*
-    var wes = document.getElementById("win_event_selection");
-    wes.style.display = "block";
-    var we = document.getElementById("win_event");
-    we.style.display = "none";
-    var bne = document.getElementById("but_new_event");
-    var oe = document.getElementById("open_events");
-    bne.onclick = (function (wes, we) {return function () {
-        wes.style.display = "none";
-        we.style.display = "block";
-        oo.Event.create("Test Event", function (newEvent) {
-            console.log("Event created: "+newEvent);
-        });
-    };})(wes, we);
-    oo.Event.allByCreationTime((function (wes, we, oe) {return function (el) {
-        var htmlout = "";
-        for (var i=0; i<el.length; i++) {
-            htmlout += "<div class=\"swag_button\" id=\"but_open_event_"+el[i].getID()+"\"><img class=\"swag_icon\" /><div class=\"swag_title\" id=\"open_event_title_"+el[i].getID()+"\">"+el[i].getName()+"</div></div>";
-        }
-        oe.innerHTML = htmlout;
-        for (var i=0; i<el.length; i++) {
-            var elemtmp = document.getElementById("but_open_event_"+el[i].getID());
-            console.log(elemtmp);
-            elemtmp.onclick = (function (ev) {return function (e) {
-                wes.style.display = "none";
-                we.style.display = "block";
-                console.log(ev);
-            };})(el[i]);
-        }
-    };})(wes, we, oe));
-    */
     si.MainStation.onAdded = function (ms) {
         // ms.powerOff();
         ms.signal(1);
@@ -155,6 +124,7 @@ si.onLoad = function (e) {
 chrome.runtime.getPlatformInfo(function (platformInfo) {
     console.log(platformInfo);
 });
+
 var openOP2P = new net.Peer2Peer("openo", "224.0.1.24"); // ffx8::0024
 /*
 openOP2P.onAdd = function (peer) {
@@ -166,7 +136,6 @@ openOP2P.onIsDuplicateInstance = function (p2p) {
 };
 
 var openOSync = new net.sync.Root('openOSync', openOP2P);
-console.log("SYNC", openOSync);
 openOP2P.onPeerID(function (p2p, peerID) {
     window.setTimeout(function () {
         var colors = ['red', 'green', 'blue', 'yellow', 'violet', 'cyan', 'orange', 'brown', 'grey'];

@@ -2,7 +2,11 @@
     "manifest_version": 2,
     "name": "Open-O",
     "version": "1.0",
-    "permissions": ["serial", "storage", "system.network", "system.storage"],
+    "permissions": ["serial", "usb", "storage", "system.network", "system.storage", {
+        "usbDevices": [
+            {"vendorId":4292, "productId":32778}
+        ]
+    }],
     "sockets": {
         "tcpServer": {
             "listen": ""
@@ -16,7 +20,7 @@
             "multicastMembership": ""
         }
     },
-    "optional_permissions": [{"usbDevices": [{"vendorId": 4292, "productId": 32778}]}],
+    "optional_permissions": [{"usbDevices": [{"vendorId":4292, "productId":32778}]}],
     "minimum_chrome_version": "23",
     "icons": {
         "16": "icon_16.png",

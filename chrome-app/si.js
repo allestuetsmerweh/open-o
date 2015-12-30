@@ -263,7 +263,7 @@ si.tools = {
 // ###### Station ######
 
 si.Station = function (mainStation) {
-    console.log("STATION", mainStation);
+    console.log("STATION INIT", mainStation);
     this.mainStation = mainStation;
     this._info = {};
     this._infoTime = 0;
@@ -507,7 +507,7 @@ si.MainStation = function (device) {
     this._resetSendCommandResp();
     this._respBuffer = [];
     this.state = si.MainStation.State.Uninitialized;
-    if (!si.MainStation.allByDevice[device]) si.MainStation.allByDevice[device] = this;
+    if (!si.MainStation.allByDevice[device.ident]) si.MainStation.allByDevice[device.ident] = this;
     this._setup();
 };
 
@@ -519,91 +519,182 @@ si.MainStation.State = { // TODO: maybe include instructions in description?
 si.MainStation.allByDevice = {};
 si.MainStation.all = function () {
     var arr = [];
-    for (var device in si.MainStation.allByDevice) {
-        arr.push(si.MainStation.allByDevice[device]);
+    for (var deviceIdent in si.MainStation.allByDevice) {
+        arr.push(si.MainStation.allByDevice[deviceIdent]);
     }
     return arr;
 };
-si.MainStation._detectDevicesUsingChromeApp = function () {
-    chrome.serial.getDevices(function(ports) {
+si.MainStation._detectDevicesUsingChromeAppSerial = function () {
+    chrome.serial.getDevices(function (ports) {
         ports.forEach(function (port) {
             var is_si = (port.path.substr(0, 23)=="/dev/tty.SLAB_USBtoUART");
             is_si = is_si || (port.path.substr(0, 11)=="/dev/ttyUSB");
-            if (is_si && !si.MainStation.allByDevice[port.path]) new si.MainStation(port.path);
+            // TODO: Check if usb device present (which cannot be opened, because it has a serial driver)
+            if (is_si && !si.MainStation.allByDevice["TTY-"+port.path]) new si.MainStation({ident:"TTY-"+port.path, setup:function (ms) {
+                chrome.serial.connect(port.path, {name:"OpenO"/* TODO: make variable */, bitrate:38400}, function (info) {
+                    if (chrome.runtime.lastError) {
+                        console.error("Error connecting to "+port.path+":", chrome.runtime.lastError);
+                        return;
+                    }
+                    ms._chromeAppConnID = info.connectionId;
+                    chrome.serial.onReceive.addListener(function (e) {
+                        if (e.connectionId!=ms._chromeAppConnID) return;
+                        var bufView = new Uint8Array(e.data);
+                        console.debug("<=", si.tools.prettyHex(bufView));
+                        for (var i=0; i<bufView.length; i++) ms._respBuffer.push(bufView[i]);
+                        ms._processRespBuffer();
+                    });
+                    chrome.serial.onReceiveError.addListener(function (e) {
+                        if (e.connectionId!=ms._chromeAppConnID) return;
+                        chrome.serial.disconnect(ms._chromeAppConnID, function (info) {
+                            delete si.MainStation.allByDevice[ms.device.ident];
+                            try {
+                                si.MainStation.onRemoved(ms);
+                            } catch (err) {}
+                            try {
+                                ms.onRemoved();
+                            } catch (err) {}
+                        });
+                    });
+                    ms._sendCommand(si.proto.cmd.GET_MS, [0x00], 1, function () {
+                        ms.state = si.MainStation.State.Ready;
+                        try {
+                            si.MainStation.onAdded(ms);
+                        } catch (err) {}
+                    });
+                });
+            }, send:function (ms, buffer, callback) {
+                chrome.serial.send(ms._chromeAppConnID, buffer, function (info) {
+                    callback(info);
+                });
+            }});
         });
     });
 };
-/*
-si.MainStation._detectDevicesUsingLocalhost = function () {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", "http://localhost:1366/devices", true);
-    xhr.onReadyStateChange = (function (si, xhr) {return function (e) {
-        if (xhr.readyState==4) {
-            if (xhr.status==200) {
-                var devs = JSON.parse(xhr.responseText);
-                for (var i=0; i<devs.length; i++) {
-                    if (!si.MainStation.allByDevice[devs[i]]) new si.MainStation(devs[i]);
+si.MainStation._detectDevicesUsingChromeAppUSB = function () {
+    chrome.usb.getDevices({"vendorId":4292, "productId":32778}, function (devices) {
+        devices.forEach(function (device) {
+            chrome.usb.openDevice(device, function (conn) {
+                if (chrome.runtime.lastError) {
+                    // This is a very usual error (e.g. if a serial driver exists on the computer)
+                    //console.error("Could not open device: ", chrome.runtime.lastError);
+                    return;
                 }
-            } else {
-            }
-        }
-    };})(si, xhr);
-    xhr.send();
+                if (!si.MainStation.allByDevice["USB-"+device.serialNumber]) new si.MainStation({ident:"USB-"+device.serialNumber, setup:function (ms) {
+                    chrome.usb.getConfiguration(conn, function (config) {
+                        console.debug("USB Device:", device, conn, config);
+                    });
+                    chrome.usb.listInterfaces(conn, function (ifaces) {
+                        var iface = false;
+                        var epOut = false;
+                        var epIn = false;
+                        for (var i=0; i<ifaces.length; i++) {
+                            iface = ifaces[i];
+                            epOut = false;
+                            epIn = false;
+                            for (var j=0; j<iface.endpoints.length; j++) {
+                                var ep = iface.endpoints[j];
+                                if (ep.type=="bulk" && ep.usage=="data") {
+                                    if (ep.direction=="out") epOut = ep;
+                                    if (ep.direction=="in") epIn = ep;
+                                }
+                            }
+                            if (iface && epOut && epIn) break;
+                        }
+                        ms._chromeAppUSBInterface = iface;
+                        ms._chromeAppUSBEPOut = epOut;
+                        ms._chromeAppUSBEPIn = epIn;
+                        console.debug("USB Device Interface:", iface);
+                        console.debug("USB Device Bulk Out:", epOut);
+                        console.debug("USB Device Bulk In:", epIn);
+                        ms._handleChromeAppUSBReceive = function (info) {
+                            if (chrome.runtime.lastError) {
+                                console.error("Error on bulkTransfer RECV: ", chrome.runtime.lastError);
+                                chrome.usb.controlTransfer(conn, {requestType:"vendor", recipient:"interface", direction:"in", request:0x1D, value:0x00, index:iface.interfaceNumber, length:4}, function (info) {
+                                    if (chrome.runtime.lastError) {
+                                        console.error("Cannot communicate with device anymore => release and close: ", chrome.runtime.lastError);
+                                        chrome.usb.releaseInterface(conn, iface.interfaceNumber, function () {
+                                            if (chrome.runtime.lastError) {
+                                                console.error("Cannot release interface "+iface.interfaceNumber+": ", chrome.runtime.lastError);
+                                            }
+                                            chrome.usb.closeDevice(conn, function () {
+                                                if (chrome.runtime.lastError) {
+                                                    console.error("Cannot close device: ", chrome.runtime.lastError);
+                                                }
+                                                delete si.MainStation.allByDevice[ms.device.ident];
+                                                try {
+                                                    si.MainStation.onRemoved(ms);
+                                                } catch (err) {}
+                                                try {
+                                                    ms.onRemoved();
+                                                } catch (err) {}
+                                            });
+                                        });
+                                        return;
+                                    }
+                                    chrome.usb.bulkTransfer(conn, {direction:"in", endpoint:epIn.address, length:epIn.maximumPacketSize}, ms._handleChromeAppUSBReceive);
+                                });
+                                return;
+                            }
+                            chrome.usb.bulkTransfer(conn, {direction:"in", endpoint:epIn.address, length:epIn.maximumPacketSize}, ms._handleChromeAppUSBReceive);
+                            var bufView = new Uint8Array(info.data);
+                            console.debug("<=", si.tools.prettyHex(bufView));
+                            for (var i=0; i<bufView.length; i++) ms._respBuffer.push(bufView[i]);
+                            ms._processRespBuffer();
+                        };
+                        chrome.usb.claimInterface(conn, iface.interfaceNumber, function () {
+                            if (chrome.runtime.lastError) {
+                                console.error("Could not claim interface 0: ", chrome.runtime.lastError);
+                                return;
+                            }
+                            chrome.usb.setInterfaceAlternateSetting(conn, iface.interfaceNumber, iface.alternateSetting, function () {
+                                if (chrome.runtime.lastError) {
+                                    console.error("Could not set alternate interface "+iface.interfaceNumber+": ", chrome.runtime.lastError);
+                                    return;
+                                }
+                                chrome.usb.controlTransfer(conn, {requestType:"vendor", recipient:"interface", direction:"out", request:0x00, value:0x01, index:iface.interfaceNumber, data:new Uint8Array([]).buffer}, function (info) {
+                                    if (chrome.runtime.lastError) {
+                                        console.error("Could not enable serial: ", chrome.runtime.lastError);
+                                        return;
+                                    }
+                                    chrome.usb.controlTransfer(conn, {requestType:"vendor", recipient:"interface", direction:"out", request:0x1E, value:0x00, index:iface.interfaceNumber, data:new Uint8Array([0x00, 0x96, 0x00, 0x00]).buffer}, function (info) {
+                                        if (chrome.runtime.lastError) {
+                                            console.error("Could not set baudrate: ", chrome.runtime.lastError);
+                                            return;
+                                        }
+                                        chrome.usb.bulkTransfer(conn, {direction:"in", endpoint:epIn.address, length:epIn.maximumPacketSize}, ms._handleChromeAppUSBReceive.bind(ms));
+                                        ms._sendCommand(si.proto.cmd.GET_MS, [0x00], 1, function () {
+                                            ms.state = si.MainStation.State.Ready;
+                                            try {
+                                                si.MainStation.onAdded(ms);
+                                            } catch (err) {}
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                }, send:function (ms, buffer, callback) {
+                    chrome.usb.bulkTransfer(conn, {"direction":"out", "endpoint":ms._chromeAppUSBEPOut.address, "data":buffer}, function (info) {
+                        if (chrome.runtime.lastError) {
+                            console.error("Error on bulkTransfer SEND: ", chrome.runtime.lastError);
+                            return;
+                        }
+                    });
+                }});
+            });
+        });
+    });
 };
-chrome.usb.getDevices({"vendorId":4292, "productId":32778}, function(devices) {
-    console.log("USB", devices);
-    if (chrome.runtime.lastError != undefined) {
-        console.warn("chrome.usb.getDevices error: "+chrome.runtime.lastError.message);
-        return;
-    }
-    for (var device of devices) {
-        console.log(device);
-    }
-});
-*/
 si.MainStation._startDeviceDetectionUsingChromeApp = function () {
     var fn = function () {
-        si.MainStation._detectDevicesUsingChromeApp();
+        si.MainStation._detectDevicesUsingChromeAppUSB();
+        si.MainStation._detectDevicesUsingChromeAppSerial();
         if (si.MainStation.detectionTimeout) window.clearTimeout(si.MainStation.detectionTimeout);
         si.MainStation.detectionTimeout = window.setTimeout(arguments.callee, 1000);
     };
     fn();
 };
-/*
-si.MainStation._startDeviceDetectionUsingLocalhost = function () {
-    if (!si.MainStation._detectionSock || 1<si.MainStation._detectionSock.readyState) {
-        si.MainStation._detectionSock = new WebSocket("ws://localhost:1366/devices", "OpenOSportIdent");
-        si.MainStation._detectionSock.onopen = function (e) {
-            si.MainStation._detectDevicesUsingLocalhost();
-        };
-        si.MainStation._detectionSock.onmessage = function (e) {
-            if (e.data=="A" || e.data=="R") {
-                si.MainStation._detectDevicesUsingLocalhost();
-            }
-        };
-        si.MainStation._detectionSock.onclose = function (e) {
-            si.MainStation._detectionSock = false;
-            if (si.MainStation.detectionTimeout) window.clearTimeout(si.MainStation.detectionTimeout);
-            si.MainStation.detectionTimeout = window.setTimeout(si.MainStation._keepDeviceDetectionUsingLocalhost, 1000);
-        };
-    }
-    if (!si.MainStation.detectionTimeout) {
-        si.MainStation.detectionTimeout = window.setTimeout(si.MainStation._keepDeviceDetectionUsingLocalhost, 1000);
-    }
-};
-si.MainStation._keepDeviceDetectionUsingLocalhost = function () {
-    if (si.MainStation.detectionTimeout) window.clearTimeout(si.MainStation.detectionTimeout);
-    if (si.MainStation._detectionSock && si.MainStation._detectionSock.readyState==1) {
-        try {
-            si.MainStation._detectionSock.send("K");
-        } catch (err) {}
-        si.MainStation.detectionTimeout = window.setTimeout(si.MainStation._keepDeviceDetectionUsingLocalhost, 10000);
-    } else {
-        si.MainStation.startDeviceDetection();
-        si.MainStation.detectionTimeout = window.setTimeout(si.MainStation._keepDeviceDetectionUsingLocalhost, 1000);
-    }
-};
-*/
 si.MainStation.startDeviceDetection = function () {
     try {
         si.MainStation._startDeviceDetectionUsingChromeApp();
@@ -618,69 +709,12 @@ si.MainStation.prototype = si.Station.prototype;
 si.MainStation.prototype.onRemoved = function () {};
 si.MainStation.prototype._setup = function () {
     try {
-        chrome.serial.connect(this.device, {name:"OpenO"/* TODO: make variable */, bitrate:38400}, (function (ms) {return function (info) {
-            if (chrome.runtime.lastError) {
-                console.error(chrome.runtime.lastError.message);
-                window.setTimeout(ms._setup.bind(ms), 1000);
-                return;
-            }
-            ms._chromeAppConnID = info.connectionId;
-            chrome.serial.onReceive.addListener(function (e) {
-                if (e.connectionId!=ms._chromeAppConnID) return;
-                var bufView = new Uint8Array(e.data);
-                console.debug("<=", si.tools.prettyHex(bufView));
-                for (var i=0; i<bufView.length; i++) ms._respBuffer.push(bufView[i]);
-                ms._processRespBuffer();
-            });
-            chrome.serial.onReceiveError.addListener(function (e) {
-                if (e.connectionId!=ms._chromeAppConnID) return;
-                chrome.serial.disconnect(ms._chromeAppConnID, function (info) {
-                    delete si.MainStation.allByDevice[ms.device];
-                    try {
-                        si.MainStation.onRemoved(ms);
-                    } catch (err) {}
-                    try {
-                        ms.onRemoved()
-                    } catch (err) {}
-                });
-            });
-            ms._sendCommand(si.proto.cmd.GET_MS, [0x00], 1, function () {
-                ms.state = si.MainStation.State.Ready;
-                try {
-                    si.MainStation.onAdded(ms);
-                } catch (err) {}
-            });
-        };})(this));
+        console.log("SETUP", this.device);
+        this.device.setup(this);
     } catch (err) {
-        console.error("Could not connect to serial port \""+this.device+"\"");
+        console.error("Could not set up si.MainStation", err);
         window.setTimeout(this._setup.bind(this), 1000);
     }
-    /*
-    this._localhostSock = new WebSocket("ws://localhost:1366/devices/"+device, "OpenOSportIdent");
-    this._localhostSock.onmessage = (function (ms) {return function (e) {
-        var resp_str = window.atob(e.data);
-        console.debug("<=", si.tools.prettyHex(resp_str));
-        for (var i=0; i<resp_str.length; i++) ms._respBuffer.push(resp_str.charCodeAt(i));
-        ms._processRespBuffer();
-    };})(this);
-    this._localhostSock.onopen = (function (ms) {return function (e) {
-        ms._sendCommand(si.proto.cmd.GET_MS, [0x00], 1, function () {
-            if (!si.MainStation.allByDevice[ms.device]) si.MainStation.allByDevice[ms.device] = ms;
-            try {
-                si.MainStation.onAdded(ms);
-            } catch (err) {}
-        });
-    };})(this);
-    this._localhostSock.onclose = (function (ms) {return function (e) {
-        delete si.MainStation.allByDevice[ms.device];
-        try {
-            si.MainStation.onRemoved(ms);
-        } catch (err) {}
-        try {
-            ms.onRemoved()
-        } catch (err) {}
-    };})(this);
-    */
 };
 si.MainStation.prototype._processRespBuffer = function () {
     while (0<this._respBuffer.length) {
@@ -826,23 +860,16 @@ si.MainStation.prototype._sendCommand = function (command, parameters, num_resp,
         for (var i=0; i<bstr.length; i++) {
             bytes[i] = bstr.charCodeAt(i);
         }
+        this.device.send(this, bytes.buffer, function (info) {
+            console.log("Sent with Chrome App", info);
+        });
+        /*
         chrome.serial.send(this._chromeAppConnID, bytes.buffer, function (info) {
             console.log("Sent with Chrome App", info);
         });
+*/
     } catch (err) {
-        /*
-        if (this._localhostSock.readyState==1) {
-            try {
-                this._localhostSock.send(window.btoa(bstr));
-            } catch (err) {
-                onError("WS_SEND_ERR");
-                return;
-            }
-        } else {
-            onError("WS_SEND_ERR");
-            return;
-        }
-        */
+        // Other method?
     }
 
     // Response handling setup
