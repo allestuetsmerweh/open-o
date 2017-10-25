@@ -1,0 +1,6 @@
+[submodule "chrome-app/lib/tableview.js"]
+	path = chrome-app/lib/tableview.js
+	url = git@bitbucket.org:allestuetsmerweh/tableview.js.git
+[submodule "web/lib/sportident"]
+	path = web/lib/sportident
+	url = git@bitbucket.org:allestuetsmerweh/sportident.git
