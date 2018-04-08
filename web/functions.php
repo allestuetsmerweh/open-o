@@ -158,9 +158,6 @@ function echo_header() {
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
 <link rel="stylesheet" type="text/css" href="styles.css" />
-<script type="text/javascript" src="lib/sportident/si.js"></script>
-<script type="text/javascript" src="lib/sportident/drivers/webusb.js"></script>
-<script type="text/javascript" src="appSI.js"></script>
 </head>
 <body style="height:100%;" class="papierbg">';
 }

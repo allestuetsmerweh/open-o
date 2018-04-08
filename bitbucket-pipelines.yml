@@ -1,0 +1,9 @@
+image: node
+pipelines:
+  default:
+    - step:
+        caches:
+          - node
+        script:
+          - npm install --global eslint
+          - eslint .
