@@ -70,8 +70,12 @@ div {
     font-size:14px;
 }
 
-.papierbg {
+.bg {
     background-color:rgb(235,225,200);
+}
+#si-quickinfo {
+    background-color:rgb(245,240,227);
+    padding: 10px;
 }
 
 .noselect {

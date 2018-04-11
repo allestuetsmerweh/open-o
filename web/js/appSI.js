@@ -1,15 +1,27 @@
 /* global si, $ */
 
-si.onLoad = (_e) => {
+si.onLoad = () => {
     if ($('#si-quickinfo').length === 0) {
-        $('body').append('<div id="si-quickinfo"></div>');
+        $('body').append('<div style="position:fixed; width: 100%;"><div style="width: 400px; margin: 20px auto;" id="si-quickinfo"></div></div>');
+        $('#si-quickinfo').fadeOut(0, () => {
+            $('#si-quickinfo').html('');
+        });
     }
+    if ($('#si-new-device-button').length === 0) {
+        const newDeviceButton = $('<button id="si-new-device-button">Neue SI Einheit</button>');
+        newDeviceButton.on('click', () => {
+            si.MainStation.newDevice();
+        });
+        $('body').append(newDeviceButton);
+    }
+
     si.MainStation.onAdded = (ms) => {
         console.log('MainStation added', ms);
 
         ms.onStateChanged = (state) => {
             if (state == si.MainStation.State.Ready) {
-                ms.signal(1);
+                ms.beeps(false)
+                    .then(() => ms.signal(1));
             }
             console.log('State changed', state);
         };

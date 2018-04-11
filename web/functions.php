@@ -159,7 +159,7 @@ function echo_header() {
 <link rel="icon" type="image/x-icon" href="favicon.ico" />
 <link rel="stylesheet" type="text/css" href="styles.css" />
 </head>
-<body style="height:100%;" class="papierbg">';
+<body style="height:100%;" class="bg">';
 }
 function echo_footer() {
     echo '</body>
