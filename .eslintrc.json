@@ -46,7 +46,7 @@
     "func-name-matching": "warn",
     "func-names": ["warn", "always"],
     "func-style": ["error", "expression"],
-    "function-paren-newline": ["error", "multiline"],
+    "function-paren-newline": ["error", "consistent"],
     "generator-star-spacing": ["error", {"before": false, "after": true}],
     "getter-return": "error",
     "guard-for-in": "warn",

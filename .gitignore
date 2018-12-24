@@ -1,12 +1,5 @@
-chrome-app/
-excel-app/
-
 docs/
 .DS_Store
 __pycache__
-chrome-app/assets/
-chrome-app/samples/
-deprecated/
-
-build/
 deployment.json
+node_modules/
