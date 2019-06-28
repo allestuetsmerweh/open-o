@@ -1,5 +1,7 @@
-docs/
-.DS_Store
-__pycache__
-deployment.json
+build/
+coverage/
+docs/local/
+docs/.circleci/
+docs/generated/
+docs/testbench/
 node_modules/

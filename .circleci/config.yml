@@ -6,26 +6,29 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:7.10
+      - image: circleci/node:latest
 
     working_directory: ~/repo
 
     steps:
       - checkout
+      - run: git submodule update --init --recursive
 
       - restore_cache:
           keys:
           - v1-dependencies-{{ checksum "package.json" }}
           - v1-dependencies-
-
       - run: npm install
-
       - save_cache:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
-      - run: npm run ci
+      - run: npm run eslint
+      - run: npm run dependency-check
+      - run: npm run jest:ci
+
+      - run: npm run webpack-src
 
       - store_artifacts:
           path: build/
