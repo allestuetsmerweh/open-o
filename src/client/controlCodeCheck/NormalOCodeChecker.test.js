@@ -1,6 +1,6 @@
 /* eslint-env jasmine */
 
-import {NormalOCodeChecker} from '../controlCodeCheck/NormalOCodeChecker';
+import {NormalOCodeChecker} from './NormalOCodeChecker';
 
 describe('NormalOCodeChecker', () => {
     it('works', () => {
