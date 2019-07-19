@@ -19,16 +19,20 @@ jobs:
           - v1-dependencies-{{ checksum "package.json" }}
           - v1-dependencies-
       - run: npm install
+      - run: cd open-o/client; npm install; cd ../..
+      - run: cd sportident; npm install; cd ..
       - save_cache:
           paths:
             - node_modules
+            - open-o/client/node_modules
+            - sportident/node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
       - run: npm run eslint
       - run: npm run dependency-check
       - run: npm run jest:ci
 
-      - run: npm run webpack-src
+      - run: npm run webpack-client
 
       - store_artifacts:
           path: build/
