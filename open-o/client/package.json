@@ -1,0 +1,69 @@
+{
+  "name": "open-o-client",
+  "version": "0.0.1",
+  "description": "Orienteering event evaluation for Chrome (Client)",
+  "main": "index.js",
+  "scripts": {
+    "webpack": "webpack",
+    "eslint": "./node_modules/eslint/bin/eslint.js .",
+    "jest": "jest",
+    "jest:ci": "jest --runInBand",
+    "dependency-check": "dependency-cruise --config=./.dependency-cruiser.js .",
+    "dev-server": "webpack-dev-server"
+  },
+  "jest": {
+    "testRegex": ".*/.*\\.test\\.js",
+    "testPathIgnorePatterns": [
+      "/sportident/",
+      "/node_modules/"
+    ],
+    "collectCoverage": true,
+    "maxConcurrency": 1
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/allestuetsmerweh/openo.hatt.style.git"
+  },
+  "author": "Simon Hatt",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/allestuetsmerweh/openo.hatt.style/issues"
+  },
+  "homepage": "https://github.com/allestuetsmerweh/openo.hatt.style#readme",
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/polyfill": "^7.4.4",
+    "@babel/preset-env": "^7.5.5",
+    "@babel/preset-react": "^7.0.0",
+    "babel-jest": "^24.8.0",
+    "babel-loader": "^8.0.6",
+    "css-loader": "^3.1.0",
+    "dependency-cruiser": "^4.27.2",
+    "eslint": "^6.0.1",
+    "eslint-plugin-react": "^7.14.2",
+    "gh-pages": "^2.0.1",
+    "html-loader": "^0.5.5",
+    "immutable": "^4.0.0-rc.12",
+    "jasmine-core": "^3.4.0",
+    "jest": "^24.8.0",
+    "lodash": "^4.17.15",
+    "prop-types": "^15.7.2",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-router-dom": "^5.0.1",
+    "react-test-renderer": "^16.8.6",
+    "static-site-generator-webpack-plugin": "^3.4.2",
+    "webpack": "^4.36.1",
+    "webpack-cli": "^3.3.6",
+    "webpack-dev-server": "^3.7.2"
+  },
+  "peerDependencies": {
+    "@babel/polyfill": "^7.4.3",
+    "immutable": "^4.0.0-rc.12",
+    "lodash": "^4.17.11",
+    "prop-types": "^15.7.2",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
+  "dependencies": {}
+}

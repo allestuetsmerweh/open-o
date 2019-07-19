@@ -1,31 +1,27 @@
 {
-  "name": "openo.hatt.style",
-  "version": "1.0.0",
+  "name": "open-o",
+  "version": "0.0.1",
   "description": "Orienteering event evaluation for Chrome",
-  "main": "openo.js",
+  "main": "index.js",
   "directories": {
-    "test": "tests"
+    "doc": "docs"
   },
   "scripts": {
-    "webpack-src": "cd src/client/ && webpack",
-    "eslint": "./node_modules/eslint/bin/eslint.js .",
-    "jest": "jest",
-    "jest:ci": "jest --runInBand",
-    "dependency-check": "dependency-cruise --config=./.dependency-cruiser.js src",
-    "openo-server": "cd src/server/ && node index.js",
-    "openo-client": "cd src/client/ && webpack-dev-server",
-    "testbench": "sh run-testbench.sh",
-    "tests": "npm run eslint && npm run jest"
-  },
-  "jest": {
-    "testRegex": ".*/.*\\.test\\.js",
-    "testPathIgnorePatterns": ["/sportident/", "/node_modules/"],
-    "collectCoverage": true,
-    "maxConcurrency": 1
+    "webpack": "npm run webpack-client",
+    "webpack-client": "cd open-o/client/ && npm run webpack",
+    "eslint": "npm run eslint-client",
+    "eslint-client": "cd open-o/client/ && npm run eslint",
+    "jest": "npm run jest-client",
+    "jest-client": "cd open-o/client/ && npm run jest",
+    "jest:ci": "npm run jest-client:ci",
+    "jest-client:ci": "cd open-o/client/ && npm run jest:ci",
+    "dependency-check": "npm run dependency-check-client",
+    "dependency-check-client": "cd open-o/client/ && npm run dependency-check",
+    "openo-client": "cd open-o/client/ && npm run dev-server"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/allestuetsmerweh/openo.hatt.style.git"
+    "url": "git+https://github.com/allestuetsmerweh/open-o.git"
   },
   "keywords": [
     "orienteering",
@@ -37,42 +33,7 @@
   "author": "Simon Hatt",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/allestuetsmerweh/openo.hatt.style/issues"
+    "url": "https://github.com/allestuetsmerweh/open-o/issues"
   },
-  "homepage": "https://github.com/allestuetsmerweh/openo.hatt.style#readme",
-  "devDependencies": {
-    "@babel/core": "^7.4.5",
-    "@babel/polyfill": "^7.4.4",
-    "@babel/preset-env": "^7.4.5",
-    "@babel/preset-react": "^7.0.0",
-    "babel-jest": "^24.8.0",
-    "babel-loader": "^8.0.6",
-    "css-loader": "^3.0.0",
-    "dependency-cruiser": "^4.24.0",
-    "eslint": "^6.0.0",
-    "eslint-plugin-react": "^7.14.2",
-    "gh-pages": "^2.0.1",
-    "html-loader": "^0.5.5",
-    "immutable": "^4.0.0-rc.12",
-    "jasmine-core": "^3.4.0",
-    "jest": "^24.8.0",
-    "lodash": "^4.17.11",
-    "prop-types": "^15.7.2",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
-    "react-router-dom": "^5.0.1",
-    "react-test-renderer": "^16.8.6",
-    "static-site-generator-webpack-plugin": "^3.4.2",
-    "webpack": "^4.35.0",
-    "webpack-cli": "^3.3.5",
-    "webpack-dev-server": "^3.7.2"
-  },
-  "peerDependencies": {
-    "@babel/polyfill": "^7.4.3",
-    "immutable": "^4.0.0-rc.12",
-    "lodash": "^4.17.11",
-    "prop-types": "^15.7.2",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6"
-  }
+  "homepage": "https://github.com/allestuetsmerweh/open-o#readme"
 }
