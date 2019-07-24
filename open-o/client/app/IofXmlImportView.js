@@ -9,7 +9,8 @@ export const IofXmlImportView = (props) => {
     const [coursesVersion, setCoursesVersion] = React.useState(0);
     const [courses, setCourses] = React.useState([]);
     React.useEffect(() => {
-        indexedDB.listEventCourses('eventIdIndex', IDBKeyRange.only(eventId)).then((newCourses) => setCourses(newCourses));
+        indexedDB.listEventCourses('eventIdIndex', IDBKeyRange.only(eventId))
+            .then((newCourses) => setCourses(newCourses));
     }, [eventId, coursesVersion]);
 
     const handleImportFile = (file) => {

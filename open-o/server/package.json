@@ -1,0 +1,41 @@
+{
+  "name": "open-o-server",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "db-migrate": "DATABASE_URL='mysql://root:@localhost:3306/open_o' db-migrate",
+    "eslint": "./node_modules/eslint/bin/eslint.js .",
+    "jest": "jest",
+    "jest:ci": "jest --runInBand",
+    "dependency-check": "dependency-cruise --config=./.dependency-cruiser.js .",
+    "dev-server": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/allestuetsmerweh/open-o.git"
+  },
+  "author": "Simon Hatt",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/allestuetsmerweh/open-o/issues"
+  },
+  "homepage": "https://github.com/allestuetsmerweh/open-o#readme",
+  "devDependencies": {
+    "eslint": "^6.1.0",
+    "nodemon": "^1.19.1"
+  },
+  "dependencies": {
+    "bcrypt-nodejs": "0.0.3",
+    "body-parser": "^1.19.0",
+    "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.4",
+    "db-migrate": "^0.11.6",
+    "db-migrate-mysql": "^1.1.10",
+    "express": "^4.17.1",
+    "express-session": "^1.16.2",
+    "mysql": "^2.17.1",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0"
+  }
+}

@@ -5,12 +5,14 @@ import indexedDB from '../dataStorage/indexedDB';
 
 export const EventDetailView = (props) => {
     const eventId = parseInt(props.match.params.eventId, 10);
-    const [event, setEvent] = React.useState(null);
-    React.useEffect(() => {
-        indexedDB.getEvent(eventId).then((item) => setEvent(item));
-    }, [props.match.params.eventId]);
 
+    const [event, setEvent] = React.useState(null);
     const [eventName, setEventName] = React.useState('');
+
+    React.useEffect(() => {
+        indexedDB.getEvent(undefined, eventId).then((item) => setEvent(item));
+    }, [eventId]);
+
     React.useEffect(() => {
         setEventName(event ? event.name : '');
     }, [event]);

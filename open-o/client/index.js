@@ -3,10 +3,10 @@ import ReactDOM from 'react-dom';
 import {HashRouter, Route} from 'react-router-dom';
 import indexHtml from './index.html';
 import stylesCss from './styles.css';
-import {MyEventListView} from './views/MyEventListView';
-import {EventDetailView} from './views/EventDetailView';
-import {CompetitorRegistrationView} from './views/CompetitorRegistrationView';
-import {IofXmlImportView} from './views/IofXmlImportView';
+import {MyEventListView} from './app/MyEventListView';
+import {EventDetailView} from './app/EventDetailView';
+import {CompetitorRegistrationView} from './app/CompetitorRegistrationView';
+import {IofXmlImportView} from './app/IofXmlImportView';
 
 export default () => indexHtml.replace(
     '<!--INSERT_CSS_HERE-->',

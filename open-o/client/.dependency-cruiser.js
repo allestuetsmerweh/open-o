@@ -116,7 +116,7 @@ module.exports = {
         },
 
         /* pattern specifying which files to exclude (regular expression) */
-        exclude: 'node_modules|(\\.min\\.js$)|(webpack\\.config\\.js$)',
+        exclude: 'node_modules|coverage|babel\\.config\\.js|\\.dependency-cruiser\\.js|(\\.min\\.js$)|(webpack\\.config\\.js$)',
 
         /* pattern specifying which files to include (regular expression)
            dependency-cruiser will skip everything not matching this pattern
