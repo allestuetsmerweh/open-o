@@ -7,17 +7,21 @@
     "doc": "docs"
   },
   "scripts": {
+    "in-client": "cd open-o/client/ && npm",
+    "in-server": "cd open-o/server/ && npm",
     "webpack": "npm run webpack-client",
     "webpack-client": "cd open-o/client/ && npm run webpack",
-    "eslint": "npm run eslint-client",
+    "eslint": "npm run eslint-client && npm run eslint-server",
     "eslint-client": "cd open-o/client/ && npm run eslint",
+    "eslint-server": "cd open-o/server/ && npm run eslint",
     "jest": "npm run jest-client",
     "jest-client": "cd open-o/client/ && npm run jest",
     "jest:ci": "npm run jest-client:ci",
     "jest-client:ci": "cd open-o/client/ && npm run jest:ci",
     "dependency-check": "npm run dependency-check-client",
     "dependency-check-client": "cd open-o/client/ && npm run dependency-check",
-    "openo-client": "cd open-o/client/ && npm run dev-server"
+    "open-o-client": "cd open-o/client/ && npm run dev-server",
+    "open-o-server": "cd open-o/server/ && npm run dev-server"
   },
   "repository": {
     "type": "git",

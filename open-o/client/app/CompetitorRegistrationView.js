@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {Link} from 'react-router-dom';
 import si from '../../../sportident/src/index';
-import indexedDB from '../dataStorage/indexedDB';
+import {handleCardInserted} from './CompetitorRegistrationController';
 
 export const CompetitorRegistrationView = (props) => {
     const WebUsbSiDevice = React.useMemo(() => si.drivers.getWebUsbSiDevice(window.navigator), []);
@@ -38,59 +38,20 @@ export const CompetitorRegistrationView = (props) => {
         ));
         const callbackByMainStation = {};
         newKioskMainStations.forEach((kioskMainStation) => {
-            const handleCardInserted = (cardInsertedEvent) => {
+            const handleCardInsertedToMainStation = (cardInsertedEvent) => {
                 if (!isKiosk) {
                     return;
                 }
-                const card = cardInsertedEvent.card;
-                console.warn(card, card.cardNumber);
-                indexedDB.listEventCompetitors(
-                    'eventIdControlCardIndex',
-                    IDBKeyRange.only([eventId, card.cardNumber]),
-                )
-                    .then((items) => {
-                        if (items.length === 0) {
-                            let createdKey = undefined;
-                            return indexedDB.createEventCompetitor({
-                                eventId: eventId,
-                                controlCard: card.cardNumber,
-                            })
-                                .then((key) => {
-                                    createdKey = key;
-                                    return kioskMainStation.sendMessage({mode: si.constants.proto.ACK}, 0);
-                                })
-                                .then(() => createdKey);
-                        }
-                        const competitorToReadOut = items.find((item) => item.results === undefined);
-                        if (competitorToReadOut === undefined) {
-                            let createdKey = undefined;
-                            return indexedDB.createEventCompetitor({
-                                eventId: eventId,
-                                controlCard: card.cardNumber,
-                            })
-                                .then((key) => {
-                                    createdKey = key;
-                                    return kioskMainStation.sendMessage({mode: si.constants.proto.ACK}, 0);
-                                })
-                                .then(() => createdKey);
-                        }
-                        return card.read()
-                            .then(() => indexedDB.putEventCompetitor({
-                                ...competitorToReadOut,
-                                results: card.toDict(),
-                            }))
-                            .then(() => kioskMainStation.sendMessage({mode: si.constants.proto.ACK}, 0))
-                            .then(() => competitorToReadOut.id);
-                    });
+                handleCardInserted(cardInsertedEvent, eventId);
             };
-            callbackByMainStation[kioskMainStation.ident] = handleCardInserted;
-            kioskMainStation.addEventListener('cardInserted', handleCardInserted);
+            callbackByMainStation[kioskMainStation.ident] = handleCardInsertedToMainStation;
+            kioskMainStation.addEventListener('siCardInserted', handleCardInsertedToMainStation);
         });
         setKioskMainStations(newKioskMainStations);
         return () => {
             newKioskMainStations.forEach((kioskMainStation) => {
-                const handleCardInserted = callbackByMainStation[kioskMainStation.ident];
-                kioskMainStation.removeEventListener('cardInserted', handleCardInserted);
+                const handleCardInsertedToMainStation = callbackByMainStation[kioskMainStation.ident];
+                kioskMainStation.removeEventListener('siCardInserted', handleCardInsertedToMainStation);
             });
         };
     }, [webUsbSiDevices, eventId, isKiosk]);
