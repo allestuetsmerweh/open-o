@@ -29,7 +29,7 @@ module.exports = (passport) => {
                 passwordField: 'password',
                 passReqToCallback: true,
             },
-            (req, username, password, done) => {
+            (_req, username, password, done) => {
                 // find a user whose email is the same as the forms email
                 // we are checking to see if the user trying to login already exists
                 connection.query(
@@ -40,7 +40,7 @@ module.exports = (passport) => {
                             return done(err);
                         }
                         if (rows.length) {
-                            return done(null, false, req.flash('signupMessage', 'That username is already taken.'));
+                            return done(null, false, {message: 'That username is already taken.'});
                         }
 
                         // create the user
@@ -86,13 +86,13 @@ module.exports = (passport) => {
                         }
                         if (!rows.length) {
                             console.warn(`No such user: ${username}`);
-                            return done(null, false, req.flash('loginMessage', 'No user found.')); // req.flash is the way to set flashdata using connect-flash
+                            return done(null, false, {message: 'No user found.'});
                         }
 
                         // if the user is found but the password is wrong
                         if (!bcrypt.compareSync(password, rows[0].password)) {
                             console.warn(`Wrong password provided for user: ${username}`);
-                            return done(null, false, req.flash('loginMessage', 'Oops! Wrong password.')); // create the loginMessage and save it to session as flashdata
+                            return done(null, false, {message: 'Oops! Wrong password.'});
                         }
 
                         // all is well, return successful user

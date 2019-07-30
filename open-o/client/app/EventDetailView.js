@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {Link} from 'react-router-dom';
-import indexedDB from '../dataStorage/indexedDB';
+import db from '../dataStorage';
 
 export const EventDetailView = (props) => {
     const eventId = parseInt(props.match.params.eventId, 10);
@@ -10,7 +10,7 @@ export const EventDetailView = (props) => {
     const [eventName, setEventName] = React.useState('');
 
     React.useEffect(() => {
-        indexedDB.getEvent(undefined, eventId).then((item) => setEvent(item));
+        db.getEvent(undefined, eventId).then((item) => setEvent(item));
     }, [eventId]);
 
     React.useEffect(() => {
@@ -19,20 +19,20 @@ export const EventDetailView = (props) => {
 
     return (
         <div>
-            <div><Link to={'/'}>Back to Home</Link></div>
+            <div><Link to={'/my_events'}>Back to My Events</Link></div>
             <div>
                 Name: <input
                     value={eventName}
                     onChange={(changeEvent) => {
                         const newEventName = changeEvent.target.value;
                         setEventName(newEventName);
-                        indexedDB.putEvent({...event, name: newEventName}).then(console.warn);
+                        db.putEvent({...event, name: newEventName}).then(console.warn);
                     }}
                 />
             </div>
             {props.match.params.eventId}
-            <div><Link to={`/events/${eventId}/import`}>Import</Link></div>
-            <div><Link to={`/events/${eventId}/registration`}>Registration</Link></div>
+            <div><Link to={`/my_events/${eventId}/import`}>Import</Link></div>
+            <div><Link to={`/my_events/${eventId}/registration`}>Registration</Link></div>
         </div>
     );
 };
