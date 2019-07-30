@@ -2,14 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {Link} from 'react-router-dom';
 import {parseIofXml} from '../iofXml/parse';
-import indexedDB from '../dataStorage/indexedDB';
+import db from '../dataStorage';
 
 export const IofXmlImportView = (props) => {
     const eventId = parseInt(props.match.params.eventId, 10);
     const [coursesVersion, setCoursesVersion] = React.useState(0);
     const [courses, setCourses] = React.useState([]);
     React.useEffect(() => {
-        indexedDB.listEventCourses('eventIdIndex', IDBKeyRange.only(eventId))
+        db.listEventCourses('eventIdIndex', IDBKeyRange.only(eventId))
             .then((newCourses) => setCourses(newCourses));
     }, [eventId, coursesVersion]);
 
@@ -18,9 +18,9 @@ export const IofXmlImportView = (props) => {
         reader.onload = (readEvent) => {
             const contentString = readEvent.target.result;
             const importData = parseIofXml(contentString);
-            indexedDB.deleteEventCourses('eventIdIndex', IDBKeyRange.only(eventId));
+            db.deleteEventCourses('eventIdIndex', IDBKeyRange.only(eventId));
             Object.keys(importData.courseByName).forEach((courseName) => {
-                indexedDB.createEventCourse({
+                db.createEventCourse({
                     name: courseName,
                     controls: importData.courseByName[courseName],
                     eventId: eventId,
@@ -54,7 +54,7 @@ export const IofXmlImportView = (props) => {
 
     return (
         <div>
-            <div><Link to={`/events/${eventId}`}>Back to Event</Link></div>
+            <div><Link to={`/my_events/${eventId}`}>Back to Event</Link></div>
             {props.match.params.eventId}
             {courses.map((course) => (
                 <div key={course.id}>

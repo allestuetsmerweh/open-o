@@ -2,9 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {Link} from 'react-router-dom';
 import si from '../../../sportident/src/index';
-import {handleCardInserted} from './CompetitorRegistrationController';
+import {handleCardInserted} from './EventCompetitorRegistrationController';
 
-export const CompetitorRegistrationView = (props) => {
+export const EventCompetitorRegistrationView = (props) => {
     const WebUsbSiDevice = React.useMemo(() => si.drivers.getWebUsbSiDevice(window.navigator), []);
     const webUsbSiDevices = si.react.useSiDevices(WebUsbSiDevice, React);
 
@@ -71,7 +71,7 @@ export const CompetitorRegistrationView = (props) => {
 
     const setupContent = (
         <div>
-            <div><Link to={`/events/${eventId}`}>Back to Event</Link></div>
+            <div><Link to={`/my_events/${eventId}`}>Back to Event</Link></div>
             <div>{props.match.params.eventId}</div>
             <div>{deviceList}</div>
             <div><button onClick={() => WebUsbSiDevice.detect()}>New Device</button></div>
@@ -97,7 +97,7 @@ export const CompetitorRegistrationView = (props) => {
         </div>
     );
 };
-CompetitorRegistrationView.propTypes = {
+EventCompetitorRegistrationView.propTypes = {
     match: PropTypes.shape({
         params: PropTypes.shape({
             eventId: PropTypes.string,

@@ -1,7 +1,8 @@
 import {BaseCodeChecker} from './BaseCodeChecker';
 
 export class NormalOCodeChecker extends BaseCodeChecker {
-    constructor(courseControlCodes, {replacementCodes, timeAnnihilations} = {}) {
+    constructor(courseControlCodes, options = {}) {
+        const {replacementCodes, timeAnnihilations} = options;
         super({replacementCodes});
         this.courseControlCodes = courseControlCodes;
         this.timeAnnihilations = timeAnnihilations;
@@ -10,7 +11,14 @@ export class NormalOCodeChecker extends BaseCodeChecker {
     evaluate(_startTime, _finishTime, splitTimes) {
         const _correctUntilIndex = splitTimes.reduce(
             (courseIndex, splitTime) => {
-                if (splitTime.controlCode === this.courseControlCodes[courseIndex]) {
+                const expectedControlCode = this.courseControlCodes[courseIndex];
+                const competitorControlCode = splitTime.controlCode;
+                const actualControlCode = (
+                    competitorControlCode in this.replacementCodes
+                        ? this.replacementCodes[competitorControlCode]
+                        : competitorControlCode
+                );
+                if (actualControlCode === expectedControlCode) {
                     return courseIndex + 1;
                 }
                 return courseIndex;

@@ -53,6 +53,12 @@ module.exports = [
             inline: false,
             port: 30270,
             watchContentBase: true,
+            proxy: {
+                '/api': {
+                    target: 'http://localhost:30271',
+                    pathRewrite: {'^/api': ''},
+                },
+            },
         },
         stats: {
             colors: true,
