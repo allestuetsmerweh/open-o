@@ -1,60 +1,60 @@
 const LocalStrategy = require('passport-local').Strategy;
 const mysql = require('mysql');
 const bcrypt = require('bcrypt-nodejs');
+const jwt = require('jsonwebtoken');
+const passportJwt = require('passport-jwt');
 
 const dbconfig = require('./database');
 const connection = mysql.createConnection(dbconfig.connection);
 connection.query(`USE ${dbconfig.database};`);
 
+const ExtractJwt = passportJwt.ExtractJwt;
+const JwtStrategy = passportJwt.Strategy;
+const jwtOptions = {
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: 'tasmanianDevil', // TODO: use actual secret
+};
+
+const generateJsonWebToken = (user) => {
+    const payload = {id: user.id, email: user.email};
+    const token = jwt.sign(payload, jwtOptions.secretOrKey, {expiresIn: '21h'});
+    return `Bearer ${token}`;
+};
+
 module.exports = (passport) => {
-    passport.serializeUser((user, done) => {
-        done(null, user.id);
-    });
-
-    passport.deserializeUser((id, done) => {
-        connection.query(
-            'SELECT * FROM users WHERE id = ?',
-            [id],
-            (err, rows) => {
-                done(err, rows[0]);
-            },
-        );
-    });
-
     passport.use(
         'local-signup',
         new LocalStrategy(
             {
-                usernameField: 'username',
+                usernameField: 'email',
                 passwordField: 'password',
                 passReqToCallback: true,
+                session: false,
             },
-            (_req, username, password, done) => {
-                // find a user whose email is the same as the forms email
-                // we are checking to see if the user trying to login already exists
+            (_req, email, password, done) => {
                 connection.query(
-                    'SELECT * FROM users WHERE username = ?',
-                    [username],
+                    'SELECT * FROM users WHERE email = ?',
+                    [email],
                     (err, rows) => {
                         if (err) {
                             return done(err);
                         }
                         if (rows.length) {
-                            return done(null, false, {message: 'That username is already taken.'});
+                            return done(null, false, {message: 'That email is already used.'});
                         }
 
-                        // create the user
-                        const newUserMysql = {
-                            username: username,
-                            password: bcrypt.hashSync(password, null, null), // use the generateHash function in our user model
+                        const newUser = {
+                            email: email,
+                            password: bcrypt.hashSync(password, null, null),
                         };
 
                         connection.query(
-                            'INSERT INTO users (username, password) VALUES (?, ?)',
-                            [newUserMysql.username, newUserMysql.password],
+                            'INSERT INTO users (email, password) VALUES (?, ?)',
+                            [newUser.email, newUser.password],
                             (_insertionErr, insertionRows) => {
-                                newUserMysql.id = insertionRows.insertId;
-                                return done(null, newUserMysql);
+                                newUser.id = insertionRows.insertId;
+                                const token = generateJsonWebToken(newUser);
+                                return done(null, newUser, {token: token});
                             },
                         );
                         return null;
@@ -68,38 +68,67 @@ module.exports = (passport) => {
         'local-login',
         new LocalStrategy(
             {
-                usernameField: 'username',
+                usernameField: 'email',
                 passwordField: 'password',
                 passReqToCallback: true,
+                session: false,
             },
-            (req, username, password, done) => {
+            (req, email, password, done) => {
                 console.log(`Req: ${req}`);
-                console.log(`Username: ${username}`);
+                console.log(`E-Mail: ${email}`);
                 console.log(`Password: ${password}`);
                 connection.query(
-                    'SELECT * FROM users WHERE username = ?',
-                    [username],
+                    'SELECT * FROM users WHERE email = ?',
+                    [email],
                     (err, rows) => {
                         if (err) {
                             console.error(`MySQL error: ${err}`);
                             return done(err);
                         }
+
                         if (!rows.length) {
-                            console.warn(`No such user: ${username}`);
+                            console.warn(`No such user: ${email}`);
                             return done(null, false, {message: 'No user found.'});
                         }
 
-                        // if the user is found but the password is wrong
+                        const user = rows[0];
+
                         if (!bcrypt.compareSync(password, rows[0].password)) {
-                            console.warn(`Wrong password provided for user: ${username}`);
+                            console.warn(`Wrong password provided for user: ${email}`);
                             return done(null, false, {message: 'Oops! Wrong password.'});
                         }
 
-                        // all is well, return successful user
-                        return done(null, rows[0]);
+                        const token = generateJsonWebToken(user);
+                        return done(null, user, {token: token});
                     },
                 );
             },
         ),
     );
+
+    passport.use(
+        'jwt-auth',
+        new JwtStrategy(jwtOptions, (jwtPayload, done) => {
+            connection.query(
+                'SELECT * FROM users WHERE id = ? AND email = ?',
+                [jwtPayload.id, jwtPayload.email],
+                (err, rows) => {
+                    if (err) {
+                        console.error(`MySQL error: ${err}`);
+                        return done(err);
+                    }
+                    if (!rows.length) {
+                        console.warn(`No such user: id:${jwtPayload.id}, email:${jwtPayload.email}`);
+                        return done(null, false, {message: 'No such user found.'});
+                    }
+
+                    const user = rows[0];
+
+                    return done(null, user, {});
+                },
+            );
+        }),
+    );
+
+    passport.jwtAuth = passport.authenticate('jwt-auth', {session: false});
 };

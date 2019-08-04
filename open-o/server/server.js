@@ -1,9 +1,6 @@
 const express = require('express');
-const session = require('express-session');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
 const passport = require('passport');
-const connectFlash = require('connect-flash');
 
 const app = express();
 const port = process.env.PORT || 30271;
@@ -17,17 +14,9 @@ app.use((_req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
 });
-app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
-app.use(session({
-    secret: 'wtfwtfwtfwtfwtf',
-    resave: true,
-    saveUninitialized: true,
-}));
 app.use(passport.initialize());
-app.use(passport.session());
-app.use(connectFlash());
 
 // Routes
 const routesList = [

@@ -5,7 +5,7 @@ import si from '../../../sportident/src/index';
 import {handleCardInserted} from './EventCompetitorRegistrationController';
 
 export const EventCompetitorRegistrationView = (props) => {
-    const WebUsbSiDevice = React.useMemo(() => si.drivers.getWebUsbSiDevice(window.navigator), []);
+    const WebUsbSiDevice = React.useMemo(() => si.getWebUsbSiDeviceClass(window.navigator), []);
     const webUsbSiDevices = si.react.useSiDevices(WebUsbSiDevice, React);
 
     const eventId = parseInt(props.match.params.eventId, 10);
@@ -34,7 +34,7 @@ export const EventCompetitorRegistrationView = (props) => {
 
     React.useEffect(() => {
         const newKioskMainStations = [...webUsbSiDevices.values()].map((newKioskDevice) => (
-            si.MainStation.fromSiDevice(newKioskDevice)
+            si.SiMainStation.fromSiDevice(newKioskDevice)
         ));
         const callbackByMainStation = {};
         newKioskMainStations.forEach((kioskMainStation) => {

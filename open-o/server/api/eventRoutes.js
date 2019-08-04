@@ -1,15 +1,16 @@
 'use strict';
 
-module.exports = ({app}) => {
+module.exports = ({app, passport}) => {
     const eventController = require('./eventController');
 
-    app.route('/recent_events')
-        .get(eventController.list_recent_events);
-    // .post(todoList.create_a_task);
-
-
-    // app.route('/tasks/:taskId')
-    //     .get(todoList.read_a_task)
-    //     .put(todoList.update_a_task)
-    //     .delete(todoList.delete_a_task);
+    app.get(
+        '/recent_events',
+        passport.jwtAuth,
+        eventController.list_recent_events,
+    );
+    app.get(
+        '/my_events',
+        passport.jwtAuth,
+        eventController.list_my_events,
+    );
 };

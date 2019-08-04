@@ -1,21 +1,35 @@
 module.exports = ({app, passport}) => {
+    const renderUser = (user) => ({
+        type: 'User',
+        id: user.id,
+        email: user.email,
+    });
+
+    const renderTokenWithUser = (token, user) => ({
+        data: {
+            type: 'Token',
+            id: token,
+            relationships: {
+                user: {
+                    data: {
+                        type: 'User',
+                        id: user.id,
+                    },
+                },
+            },
+        },
+        included: [
+            renderUser(user),
+        ],
+    });
+
     app.post(
         '/login',
         (req, res) => passport.authenticate(
             'local-login',
             (err, user, info) => {
-                if (req.body.remember) {
-                    req.session.cookie.maxAge = 1000 * 60 * 3;
-                } else {
-                    req.session.cookie.expires = false;
-                }
-                if (user) {
-                    res.json({
-                        data: {
-                            type: 'User',
-                            id: `${user.id}`,
-                        },
-                    });
+                if (info.token && user) {
+                    res.json(renderTokenWithUser(info.token, user));
                     return;
                 }
                 if (err) {
@@ -44,13 +58,8 @@ module.exports = ({app, passport}) => {
         (req, res) => passport.authenticate(
             'local-signup',
             (err, user, info) => {
-                if (user) {
-                    res.json({
-                        data: {
-                            type: 'User',
-                            id: `${user.id}`,
-                        },
-                    });
+                if (info.token && user) {
+                    res.json(renderTokenWithUser(info.token, user));
                     return;
                 }
                 if (err) {
@@ -78,7 +87,17 @@ module.exports = ({app, passport}) => {
         '/logout',
         (req, res) => {
             req.logout();
-            res.redirect('/');
+            res.json({});
+        },
+    );
+
+    app.get(
+        '/me',
+        passport.jwtAuth,
+        (req, res) => {
+            res.json({
+                data: renderUser(req.user),
+            });
         },
     );
 };
