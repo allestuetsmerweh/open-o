@@ -1,20 +1,25 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {Link} from 'react-router-dom';
 import {useOpenORestApi} from './OpenORestApi';
 
-export const UserLoginView = () => {
+export const UserRegistrationView = (props) => {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const api = useOpenORestApi();
 
     const handleSubmit = () => {
-        console.warn(email, password);
-        api.post('login', {username: email, password: password})
-            .then((wtf) => {
-                console.warn(wtf);
+        api.post('signup', {email: email, password: password})
+            .then((response) => {
+                console.warn(response.data);
+                if (response.data && response.data.type === 'Token' && response.data.id) {
+                    api.tokenStorage.setToken(response.data.id);
+                    props.onSuccess(response);
+                }
             });
     };
 
+    // TODO: Retype password
     return (
         <div>
             <div><Link to={'/'}>Back to Home</Link></div>
@@ -41,10 +46,18 @@ export const UserLoginView = () => {
                 <div>
                     <input
                         type='submit'
-                        value='Log in'
+                        value='Sign up'
                     />
                 </div>
             </form>
         </div>
     );
+};
+UserRegistrationView.propTypes = {
+    onSuccess: PropTypes.func,
+};
+UserRegistrationView.defaultProps = {
+    onSuccess: () => {
+        window.location.href = '#/';
+    },
 };

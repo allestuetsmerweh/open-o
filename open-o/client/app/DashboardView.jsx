@@ -1,18 +1,26 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {useIsOnline} from './hooks';
+import {useOpenORestApi} from './OpenORestApi';
 
 export const DashboardView = () => {
     const isOnline = useIsOnline();
+    const api = useOpenORestApi();
+    const isLoggedIn = api.tokenStorage && api.tokenStorage.token !== undefined;
 
     const registerLink = (
         <div key='register'>
-            <Link to={'register'}>Register in Competitor Database</Link>
+            <Link to={'register'}>Register</Link>
         </div>
     );
     const loginLink = (
         <div key='login'>
             <Link to={'login'}>Log in</Link>
+        </div>
+    );
+    const competitorsLink = (
+        <div key='competitors'>
+            <Link to={'competitors'}>Competitors</Link>
         </div>
     );
     const myEventsLink = (
@@ -28,8 +36,9 @@ export const DashboardView = () => {
 
     return (
         <div>
-            {isOnline && registerLink}
-            {loginLink}
+            {isOnline && !isLoggedIn && registerLink}
+            {isOnline && !isLoggedIn && loginLink}
+            {isOnline && competitorsLink}
             {myEventsLink}
             {isOnline && resultsLink}
         </div>

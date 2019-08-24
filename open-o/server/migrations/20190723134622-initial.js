@@ -13,7 +13,7 @@ exports.setup = (options, seedLink) => {
 exports.up = (db) => (
     db.createTable('users', {
         id: {type: type.INTEGER, primaryKey: true, autoIncrement: true},
-        username: type.STRING,
+        email: type.STRING,
         password: type.STRING,
     })
         .then(() => (
