@@ -23,6 +23,7 @@
   "homepage": "https://github.com/allestuetsmerweh/open-o#readme",
   "devDependencies": {
     "eslint": "^6.2.2",
+    "eslint-plugin-react": "^7.18.0",
     "nodemon": "^1.19.1"
   },
   "dependencies": {

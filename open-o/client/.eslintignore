@@ -2,4 +2,3 @@ build/*
 docs/*
 web/lib/jquery/*
 node_modules/*
-sportident/

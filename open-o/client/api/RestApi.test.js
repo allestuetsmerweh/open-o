@@ -1,6 +1,6 @@
 /* eslint-env jasmine */
 
-import * as testUtils from '../../../sportident/src/testUtils';
+import * as testUtils from 'sportident/lib/testUtils';
 import {RestApi, contentTypeJson} from './RestApi';
 
 beforeEach(() => {
