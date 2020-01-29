@@ -1,22 +1,25 @@
-import si from '../../../sportident/src/index';
+import si from 'sportident/lib/index';
 
 export class ApiTokenStorage {
     constructor(initialToken) {
         this.token = initialToken;
-        this._eventListeners = {};
+        this.hackyCallback = null;
         this.read();
     }
 
-    addEventListener(type, callback) {
-        return si.utils.addEventListener(this._eventListeners, type, callback);
+    addEventListener(_type, callback) {
+        this.hackyCallback = callback;
     }
 
-    removeEventListener(type, callback) {
-        return si.utils.removeEventListener(this._eventListeners, type, callback);
+    removeEventListener(_type, _callback) {
+        this.hackyCallback = null;
     }
 
-    dispatchEvent(type, args) {
-        return si.utils.dispatchEvent(this._eventListeners, type, args);
+    dispatchEvent(_type, args) {
+        const hackyCallback = this.hackyCallback;
+        if (hackyCallback !== null) {
+            hackyCallback(args);
+        }
     }
 
     setToken(newToken) {

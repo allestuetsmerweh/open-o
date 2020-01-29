@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {Link} from 'react-router-dom';
-import si from '../../../sportident/src/index';
+import si from 'sportident/lib/index';
 import {handleCardInserted} from './EventCompetitorRegistrationController';
 
 export const EventCompetitorRegistrationView = (props) => {

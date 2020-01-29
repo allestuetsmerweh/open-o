@@ -1,4 +1,4 @@
-import si from '../../../sportident/src/index';
+import si from 'sportident/lib/index';
 import dataStorageCommands from '../dataStorage';
 
 export const handleCardInserted = (
