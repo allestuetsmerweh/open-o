@@ -28,10 +28,10 @@
   },
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",
-    "body-parser": "^1.19.0",
+    "body-parser": "^1.20.1",
     "db-migrate": "^0.11.6",
     "db-migrate-mysql": "^1.1.10",
-    "express": "^4.17.1",
+    "express": "^4.18.2",
     "jsonwebtoken": "^8.5.1",
     "mysql": "^2.17.1",
     "passport": "^0.4.0",
