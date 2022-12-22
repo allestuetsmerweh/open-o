@@ -32,7 +32,7 @@
     "db-migrate": "^0.11.6",
     "db-migrate-mysql": "^1.1.10",
     "express": "^4.17.1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "mysql": "^2.17.1",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
